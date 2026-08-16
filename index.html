@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/organic-5f114c4c-473f-450c-9e1e-743c713fef74/styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    body { background: var(--color-bg); }
+    a { color: var(--color-accent-700); }
+    a:hover { color: var(--color-accent); }
+    body, .btn, .dialog-body { font-size: 16px !important; }
+    .field > label { font-size: 16px !important; }
+    .input, .radio { font-size: 16px !important; }
+    .input { background: hsl(45,7%,90%) !important; }
+    .input:focus-visible { border-color: #d9a536 !important; }
+    :focus-visible { outline-color: #d9a536 !important; }
+    .btn { font-family: var(--font-body) !important; }
+    ::selection { background: color-mix(in srgb, #d9a536 30%, transparent) !important; }
+    html, body { height: 100%; margin: 0; }
+    .leaflet-container { font-family: var(--font-body); background: var(--color-surface); }
+  </style>
+</helmet>
+<div style="position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;overflow:hidden">
+  <div ref="{{ mapRef }}" style="position:absolute;inset:0;z-index:0;filter:blur(4px);transform:scale(1.05)"></div>
+  <div style="position:absolute;inset:0;background:hsla(45,7%,20%,0.35);z-index:1"></div>
+
+  <div class="card elev-md" style="position:relative;z-index:2;width:100%;max-width:380px;padding:36px 32px;display:flex;flex-direction:column;gap:24px;background:hsl(45,7%,98%)">
+    <div style="text-align:center;display:flex;flex-direction:column;gap:6px">
+      <div style="font-family:var(--font-heading);font-size:32px;color:var(--color-text)">Bærlosen</div>
+      <div style="color:color-mix(in srgb, var(--color-text) 60%, transparent);font-size:16px">Logg inn for å se dine bærområder</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="field">
+        <label>Brukernavn</label>
+        <input class="input" type="text" placeholder="Skriv inn brukernavn" value="{{ username }}" onChange="{{ setUsername }}">
+      </div>
+      <div class="field">
+        <label>Passord</label>
+        <input class="input" type="password" placeholder="Skriv inn passord" value="{{ password }}" onChange="{{ setPassword }}">
+      </div>
+
+      <label style="display:flex;align-items:center;gap:10px;font-size:16px;cursor:pointer">
+        <input type="checkbox" checked="{{ rememberMe }}" onChange="{{ toggleRemember }}" style="width:18px;height:18px;accent-color:#d9a536">
+        Husk meg
+      </label>
+    </div>
+
+    <sc-if value="{{ error }}" hint-placeholder-val="{{ false }}">
+      <div style="color:hsl(0,60%,45%);font-size:16px">{{ error }}</div>
+    </sc-if>
+
+    <button class="btn btn-primary btn-block" onClick="{{ handleLogin }}">Logg inn</button>
+
+    <div style="text-align:center;font-size:16px;color:color-mix(in srgb, var(--color-text) 60%, transparent)">
+      Har du ikke bruker? <a href="./Opprett bruker.dc.html">Opprett bruker</a>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const sb = window.supabase.createClient('https://wpbjdxldmvkmljaokgxn.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwYmpkeGxkbXZrbWxqYW9rZ3huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4NzEzNDgsImV4cCI6MjEwMjQ0NzM0OH0.Z2VLSYK15U27nYE-bKFZa3Bo6kjZRV7RlPfx-uzaEys');
+
+class Component extends DCLogic {
+  state = { username: '', password: '', rememberMe: true, error: null };
+  mapRef = React.createRef();
+
+  componentDidMount() {}
+
+
+  componentWillUnmount() {
+    if (this._panInterval) clearInterval(this._panInterval);
+  }
+
+  attachMap(node) {
+    if (!node || this._mapInited || !window.L) return;
+    this._mapInited = true;
+    const map = window.L.map(node, { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false, tap: false, inertia: false }).setView([63.3915, 10.3475], 13);
+    window.L.tileLayer('https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png', { attribution: '© Kartverket', maxZoom: 18 }).addTo(map);
+    setTimeout(() => map.invalidateSize(), 200);
+  }
+
+  async handleLogin(e) {
+    e.preventDefault();
+    const { username, password, rememberMe } = this.state;
+    if (!username || !password) { this.setState({ error: 'Fyll inn brukernavn og passord' }); return; }
+    const { data } = await sb.from('profiles').select('username,password').eq('username', username).maybeSingle();
+    if (!data || data.password !== password) { this.setState({ error: 'Feil brukernavn eller passord' }); return; }
+    if (rememberMe) { localStorage.setItem('baer_user', username); sessionStorage.removeItem('baer_user'); }
+    else { sessionStorage.setItem('baer_user', username); localStorage.removeItem('baer_user'); }
+    window.location.href = './Bærkart.dc.html';
+  }
+
+  renderVals() {
+    return {
+      mapRef: (node) => this.attachMap(node),
+      username: this.state.username,
+      password: this.state.password,
+      rememberMe: this.state.rememberMe,
+      setUsername: (e) => this.setState({ username: e.target.value }),
+      setPassword: (e) => this.setState({ password: e.target.value }),
+      toggleRemember: () => this.setState(s => ({ rememberMe: !s.rememberMe })),
+      error: this.state.error,
+      handleLogin: (e) => this.handleLogin(e),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

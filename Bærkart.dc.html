@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <link rel="stylesheet" href="_ds/organic-5f114c4c-473f-450c-9e1e-743c713fef74/styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    @keyframes pulse-dot { 0% { box-shadow: 0 0 0 0 rgba(59,110,168,0.5); } 100% { box-shadow: 0 0 0 14px rgba(59,110,168,0); } }
+    .leaflet-container { font-family: var(--font-body); background: var(--color-surface); }
+    .leaflet-tile { opacity: 1 !important; }
+    .leaflet-fade-anim .leaflet-tile-loaded { opacity: 1 !important; }
+    html, body { height: 100%; margin: 0; }
+    .leaflet-container { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+    input, select, textarea { font-size: 16px; }
+    .field > label { font-size: 16px !important; }
+    .seg-opt { font-size: 16px !important; }
+    .input, .radio { font-size: 16px !important; }
+    .input { background: hsl(45,7%,90%) !important; }
+    .input:focus-visible { border-color: #d9a536 !important; }
+    :focus-visible { outline-color: #d9a536 !important; }
+    ::selection { background: color-mix(in srgb, #d9a536 30%, transparent) !important; }
+    .radio input:focus-visible + .dot { outline-color: #d9a536 !important; }
+    .seg-opt:has(input:focus-visible) { outline-color: #d9a536 !important; }
+    #seg-blabaer:has(input:checked) { background: #3b6ea8 !important; color: #fff !important; }
+    #seg-tyttebaer:has(input:checked) { background: hsl(0,60%,55%) !important; color: #fff !important; }
+    #seg-multer:has(input:checked) { background: #d9a536 !important; color: #fff !important; }
+    .dialog-title { font-size: 24px !important; }
+    .btn { font-family: var(--font-body) !important; }
+    .dialog-title, .nav-brand, .card-title { font-family: var(--font-body) !important; font-weight: 700 !important; }
+    body, .btn, .dialog-body { font-size: 16px !important; }
+    .tag { font-size: 14px !important; }
+    @keyframes sheet-in { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .sheet-anim { animation: sheet-in 300ms ease-out; }
+  </style>
+</helmet>
+<div style="display:flex;flex-direction:column;height:100%;min-height:100vh;background:var(--color-bg);overflow:hidden">
+
+    <div style="position:relative;flex:1;overflow:hidden">
+      <div ref="{{ mapRef }}" style="position:absolute;inset:0"></div>
+
+      <div style="position:absolute;top:16px;left:16px;right:16px;z-index:500;display:flex;align-items:center;gap:10px;background:hsl(45,7%,98%);border-radius:999px;padding:12px 18px;transform:{{ searchBarTransform }};transition:transform 280ms ease-in-out">
+        <svg width="24" height="24" viewBox="0 -960 960 960" fill="hsl(45,7%,20%)" style="flex:none"><path d="M765-144 526-383q-30 22-65.79 34.5-35.79 12.5-76.18 12.5Q284-336 214-406t-70-170q0-100 70-170t170-70q100 0 170 70t70 170.03q0 40.39-12.5 76.18Q599-464 577-434l239 239-51 51ZM384-408q70 0 119-49t49-119q0-70-49-119t-119-49q-70 0-119 49t-49 119q0 70 49 119t119 49Z"/></svg>
+        <input type="text" placeholder="Søk etter sted eller bærfelt" value="{{ searchQuery }}" onChange="{{ setSearchQuery }}" onKeyDown="{{ handleSearchKeyDown }}" style="flex:1;min-width:0;border:none;background:none;outline:none;font-family:var(--font-body);font-size:16px;color:var(--color-text)">
+      </div>
+
+      <sc-if value="{{ hasSearchResults }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;top:70px;left:16px;right:16px;z-index:499;background:hsl(45,7%,98%);border-radius:var(--radius-md);overflow:hidden;transform:{{ searchBarTransform }};transition:transform 280ms ease-in-out">
+          <sc-for list="{{ searchResults }}" as="result" hint-placeholder-count="3">
+            <button onClick="{{ result.onClick }}" style="display:block;width:100%;text-align:left;padding:12px 18px;border:none;background:none;font-family:var(--font-body);font-size:16px;color:var(--color-text);cursor:pointer;border-top:1px solid hsl(45,7%,90%)">{{ result.label }}</button>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <div style="position:absolute;left:14px;right:14px;bottom:{{ actionBarBottom }};display:flex;align-items:center;gap:8px;z-index:500;transition:bottom 0.3s ease">
+        <button class="btn btn-icon" style="width:48px;height:48px;border-radius:999px;flex:none;background:hsl(45,7%,20%);color:#fff" onClick="{{ openLegend }}" aria-label="Forklaring">
+          <svg width="26" height="26" viewBox="0 -960 960 960" fill="currentColor"><path d="M428-360q0-72 14.5-107.5T503-543q43-37 58-59.5t15-50.5q0-38-27-62.5T480-740q-37 0-65 23t-40 63l-96-40q21-66 76.5-106T480-840q89 0 145 51.5T681-656q0 42-18.5 76.5T596-500q-41 38-50.5 60.5T535-360H428Zm52 216q-30 0-51-21t-21-51q0-30 21-51t51-21q30 0 51 21t21 51q0 30-21 51t-51 21Z"/></svg>
+        </button>
+        <div style="display:flex;gap:10px;flex:1;justify-content:center">
+          <label style="position:relative;width:56px;height:40px;border-radius:999px;display:block;cursor:pointer;flex:none;background:{{ blabaerTrackBg }};border:1px solid {{ blabaerColor }}">
+            <input type="checkbox" checked="{{ filterBlabaerActive }}" onChange="{{ toggleFilterBlabaer }}" style="display:none">
+            <span style="position:absolute;top:calc(50% - 16px);left:4px;width:32px;height:32px;border-radius:999px;background:{{ blabaerThumbColor }};display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--font-body);font-weight:600;font-size:14px;transition:transform 150ms ease-in-out;transform:{{ blabaerThumbTransform }}">B</span>
+          </label>
+          <label style="position:relative;width:56px;height:40px;border-radius:999px;display:block;cursor:pointer;flex:none;background:{{ tyttebaerTrackBg }};border:1px solid {{ tyttebaerColor }}">
+            <input type="checkbox" checked="{{ filterTyttebaerActive }}" onChange="{{ toggleFilterTyttebaer }}" style="display:none">
+            <span style="position:absolute;top:calc(50% - 16px);left:4px;width:32px;height:32px;border-radius:999px;background:{{ tyttebaerThumbColor }};display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--font-body);font-weight:600;font-size:14px;transition:transform 150ms ease-in-out;transform:{{ tyttebaerThumbTransform }}">T</span>
+          </label>
+          <label style="position:relative;width:56px;height:40px;border-radius:999px;display:block;cursor:pointer;flex:none;background:{{ multerTrackBg }};border:1px solid {{ multerColor }}">
+            <input type="checkbox" checked="{{ filterMulterActive }}" onChange="{{ toggleFilterMulter }}" style="display:none">
+            <span style="position:absolute;top:calc(50% - 16px);left:4px;width:32px;height:32px;border-radius:999px;background:{{ multerThumbColor }};display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--font-body);font-weight:600;font-size:14px;transition:transform 150ms ease-in-out;transform:{{ multerThumbTransform }}">M</span>
+          </label>
+        </div>
+        <button class="btn btn-icon" style="width:48px;height:48px;border-radius:999px;flex:none;margin-left:auto;background:hsl(45,7%,20%);color:#fff" onClick="{{ locate }}" aria-label="Min posisjon">
+          <svg width="26" height="26" viewBox="0 -960 960 960" fill="currentColor"><path d="M444-48v-98q-121-14-202.5-96T146-444H48v-72h98q14-120 95.5-202T444-814v-98h72v98q121 14 202.5 96T814-516h98v72h-98q-14 120-95.5 202T516-146v98h-72Zm223-245q77-77 77-187t-77-187q-77-77-187-77t-187 77q-77 77-77 187t77 187q77 77 187 77t187-77Zm-289-85q-42-42-42-102t42-102q42-42 102-42t102 42q42 42 42 102t-42 102q-42 42-102 42t-102-42Zm158-46q23-23 23-56t-23-56q-23-23-56-23t-56 23q-23 23-23 56t23 56q23 23 56 23t56-23Zm-55-57Z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<sc-if value="{{ addOpen }}" hint-placeholder-val="{{ false }}">
+    <div class="dialog-backdrop" style="z-index:1000;grid-template-columns:minmax(0,1fr)">
+      <div class="dialog" style="max-height:calc(100vh - 2 * var(--space-4));overflow-y:auto;min-width:0;background:hsl(45,7%,98%)">
+        <div class="dialog-title">{{ addDialogTitle }}</div>
+
+        <div class="field">
+          <label>Navn på bærfelt</label>
+          <input class="input" type="text" placeholder="F.eks. Kobberdammen nord" value="{{ draft.name }}" onChange="{{ setDraftName }}">
+        </div>
+
+        <div class="field">
+          <div class="seg" style="margin-top:4px;display:flex">
+            <label class="seg-opt" id="seg-blabaer" style="flex:1;justify-content:center"><input type="checkbox" checked="{{ draftHasBlabaer }}" onChange="{{ toggleDraftBlabaer }}"><span>Blåbær</span></label>
+            <label class="seg-opt" id="seg-tyttebaer" style="flex:1;justify-content:center"><input type="checkbox" checked="{{ draftHasTyttebaer }}" onChange="{{ toggleDraftTyttebaer }}"><span>Tyttebær</span></label>
+            <label class="seg-opt" id="seg-multer" style="flex:1;justify-content:center"><input type="checkbox" checked="{{ draftHasMulter }}" onChange="{{ toggleDraftMulter }}"><span>Multer</span></label>
+          </div>
+        </div>
+
+        <div class="field">
+          <div style="display:flex;gap:4px;margin-top:4px;justify-content:center">
+            <sc-for list="{{ starValues }}" as="star" hint-placeholder-count="5">
+              <button type="button" onClick="{{ star.onClick }}" style="background:none;border:none;padding:2px;cursor:pointer;line-height:0">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="{{ star.fill }}" stroke="{{ star.stroke }}" stroke-width="1.5"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.8-6.2 3.8 1.6-7-5.4-4.7 7.1-.6z"/></svg>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+
+
+        <div class="field">
+          <label>Notat</label>
+          <textarea class="input" style="border-radius:8px" placeholder="F.eks. mengde, terreng, veibeskrivelse …" value="{{ draft.note }}" onChange="{{ setDraftNote }}"></textarea>
+        </div>
+
+        <div class="field">
+          <input type="file" accept="image/*" ref="{{ fileInputRef }}" onChange="{{ onPhotoChange }}" style="display:none">
+          <sc-if value="{{ hasDraftPhoto }}" hint-placeholder-val="{{ false }}">
+            <img src="{{ draft.photo }}" style="width:100%;height:130px;object-fit:cover;border-radius:var(--radius-md);margin-top:6px">
+          </sc-if>
+          <button class="btn btn-secondary btn-block" onClick="{{ triggerFileInput }}">
+            <svg width="16" height="16" viewBox="0 -960 960 960" fill="currentColor"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5t-48 119q0 69.5 48 118.5t120 49Zm0-72q-42 0-69-28.13T384-433q0-39.9 27-67.45Q438-528 480-528t69 27.55q27 27.55 27 67.45 0 40.74-27 68.87Q522-336 480-336ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l72-96h240l72 96h120q29.7 0 50.85 21.5Q864-677 864-648v432q0 29-21.15 50.5T792-144H168Zm0-72h624v-432H636l-72.1-96H396l-72 96H168v432Zm312-217Z"/></svg>
+            {{ photoButtonLabel }}
+          </button>
+        </div>
+
+        <div class="dialog-actions">
+          <button class="btn btn-secondary" onClick="{{ closeAddDialog }}">Avbryt</button>
+          <button class="btn btn-primary" onClick="{{ saveDraft }}">Lagre</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ detailOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:1000;display:flex;align-items:flex-end;justify-content:center;pointer-events:none">
+      <div class="dialog" ref="{{ sheetRef }}" style="width:100%;max-width:520px;margin:0;border-radius:var(--radius-lg) var(--radius-lg) 0 0;max-height:75vh;overflow:hidden;padding:0;background:hsl(45,7%,98%);pointer-events:auto;display:flex;flex-direction:column;transform:{{ detailSheetTransform }};transition:transform 280ms {{ detailSheetEasing }}">
+        <div style="display:flex;flex-direction:column;gap:8px;flex:none;padding:16px 16px 0">
+        <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="display:flex;align-items:flex-start;gap:8px">
+          <div style="flex:1;min-width:0">
+            <div class="dialog-title" style="margin:0">{{ detailMarkerName }}</div>
+          </div>
+          <button class="btn btn-icon btn-ghost" style="width:36px;height:36px" onClick="{{ closeDetail }}" aria-label="Lukk">
+            <svg width="24" height="24" viewBox="0 -960 960 960" fill="currentColor"><path d="m291-240-51-51 189-189-189-189 51-51 189 189 189-189 51 51-189 189 189 189-51 51-189-189-189 189Z"/></svg>
+          </button>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="display:flex">
+            <sc-for list="{{ detailBerryDots }}" as="dot" hint-placeholder-count="1">
+              <span style="width:14px;height:14px;border-radius:50%;background:{{ dot.color }};flex:none;margin-left:{{ dot.marginLeft }};border:1px solid hsl(45,7%,98%)"></span>
+            </sc-for>
+          </div>
+          <span style="font-family:var(--font-body);font-size:16px;color:var(--color-text)">{{ detailMarkerBerryLabel }}</span>
+          <div style="display:flex;gap:2px">
+            <sc-for list="{{ detailStarValues }}" as="star" hint-placeholder-count="5">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="{{ star.fill }}" stroke="{{ star.stroke }}" stroke-width="1.5"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.8-6.2 3.8 1.6-7-5.4-4.7 7.1-.6z"/></svg>
+            </sc-for>
+          </div>
+          <span style="flex:1"></span>
+        </div>
+        </div>
+
+        <div class="dialog-actions" style="justify-content:flex-start;align-items:center;gap:8px;margin:0">
+          <button class="btn btn-secondary" onClick="{{ toggleDepleted }}">
+            <svg width="18" height="18" viewBox="0 -960 960 960" fill="currentColor" style="margin-right:6px;vertical-align:-3px">{{ depletedCheckboxPath }}</svg>Utplukka
+          </button>
+          <button class="btn btn-primary" onClick="{{ checkIn }}">
+            <svg width="18" height="18" viewBox="0 -960 960 960" fill="currentColor" style="margin-right:6px;vertical-align:-3px">{{ visitedCheckboxPath }}</svg>Besøkt
+          </button>
+          <span style="flex:1"></span>
+          <button class="btn btn-icon btn-secondary" style="width:40px;height:40px;min-width:40px;padding:0;border-radius:999px" onClick="{{ openEditFromDetail }}" aria-label="Rediger">
+            <svg width="20" height="20" viewBox="0 -960 960 960" fill="currentColor"><path d="M216-216h51l375-375-51-51-375 375v51Zm-72 72v-153l498-498q11-11 23.84-16 12.83-5 27-5 14.16 0 27.16 5t24 16l51 51q11 11 16 24t5 26.54q0 14.45-5.02 27.54T795-642L297-144H144Zm600-549-51-51 51 51Zm-127.95 76.95L591-642l51 51-25.95-25.05Z"/></svg>
+          </button>
+          <button class="btn btn-icon btn-secondary" style="width:40px;height:40px;min-width:40px;padding:0;border-radius:999px" onClick="{{ askDelete }}" aria-label="Slett">
+            <svg width="20" height="20" viewBox="0 -960 960 960" fill="currentColor"><path d="M312-144q-29.7 0-50.85-21.15Q240-186.3 240-216v-480h-48v-72h192v-48h192v48h192v72h-48v479.57Q720-186 698.85-165T648-144H312Zm336-552H312v480h336v-480ZM384-288h72v-336h-72v336Zm120 0h72v-336h-72v336ZM312-696v480-480Z"/></svg>
+          </button>
+        </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;flex:1 1 auto;min-height:0">
+        <div style="flex:1 1 auto;min-height:0;overflow-y:auto;padding:8px 16px 24px;display:flex;flex-direction:column;gap:16px">
+
+        <sc-if value="{{ showConfirmDelete }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:8px;background:var(--color-accent-100);border:1px solid hsl(45,7%,80%);border-radius:var(--radius-md);padding:10px">
+            <span style="font-size:16px;flex:1">Slette dette området permanent?</span>
+            <button class="btn btn-secondary" style="font-size:16px;padding:5px 10px" onClick="{{ cancelDelete }}">Avbryt</button>
+            <button class="btn btn-primary" style="font-size:16px;padding:5px 10px" onClick="{{ confirmDelete }}">Slett</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ hasDetailPhoto }}" hint-placeholder-val="{{ false }}">
+          <img src="{{ detailMarkerPhoto }}" style="width:100%;height:150px;object-fit:cover;border-radius:var(--radius-md)">
+        </sc-if>
+
+        <sc-if value="{{ detailMarkerLastPickedLabel }}" hint-placeholder-val="{{ false }}">
+          <div class="dialog-body" style="margin:0"><strong>Sist plukket:</strong> {{ detailMarkerLastPickedLabel }}</div>
+        </sc-if>
+        <sc-if value="{{ detailMarkerNote }}" hint-placeholder-val="{{ false }}">
+          <p class="dialog-body" style="margin:0">{{ detailMarkerNote }}</p>
+        </sc-if>
+
+        <div style="margin-top:8px">
+          <p class="dialog-body" style="margin:0;color:color-mix(in srgb, var(--color-text) 60%, transparent)">Feltet er lagt til av: {{ detailMarkerAddedBy }}</p>
+        </div>
+
+        <sc-if value="{{ hasVisitLog }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:8px">
+          <div style="font-family:var(--font-body);font-weight:700;font-size:16px;color:var(--color-text);margin-bottom:12px">Besøkslogg</div>
+          <sc-for list="{{ visitLog }}" as="visit" hint-placeholder-count="0">
+            <div style="border-top:1px solid hsl(45,7%,60%);padding:10px 0;display:flex;justify-content:space-between;font-size:16px">
+              <span>{{ visit.name }}</span>
+              <span style="color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ visit.date }}</span>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+        </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ legendOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:1000;display:flex;align-items:flex-end;justify-content:center;pointer-events:none">
+      <div class="dialog" ref="{{ sheetRef }}" style="width:100%;max-width:520px;margin:0;border-radius:var(--radius-lg) var(--radius-lg) 0 0;max-height:75vh;overflow-y:auto;padding-bottom:24px;background:hsl(45,7%,98%);pointer-events:auto;transform:{{ legendSheetTransform }};transition:transform 280ms {{ detailSheetEasing }}">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="dialog-title" style="flex:1;margin:0">Forklaring</div>
+          <button class="btn btn-icon btn-ghost" style="width:40px;height:40px" onClick="{{ closeLegend }}" aria-label="Lukk">
+            <svg width="24" height="24" viewBox="0 -960 960 960" fill="currentColor"><path d="m291-240-51-51 189-189-189-189 51-51 189 189 189-189 51 51-189 189 189 189-51 51-189-189-189 189Z"/></svg>
+          </button>
+        </div>
+        <div style="display:flex;gap:32px">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:10px;font-size:16px"><span style="width:16px;height:16px;border-radius:50%;background:#3b6ea8;flex:none"></span>Blåbær</div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:16px"><span style="width:16px;height:16px;border-radius:50%;background:#a83b3b;flex:none"></span>Tyttebær</div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:16px"><span style="width:16px;height:16px;border-radius:50%;background:#d9a536;flex:none"></span>Multer</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:10px;font-size:16px;opacity:0.6"><span style="width:16px;height:16px;border-radius:50%;background:var(--color-neutral-500);display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px">✓</span>Besøkt</div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:16px;opacity:0.6"><span style="width:16px;height:16px;border-radius:50%;background:var(--color-neutral-500);display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px">✕</span>Utplukka</div>
+          </div>
+        </div>
+        <p class="dialog-body">Markerte bærområder ligger inne til du sletter dem selv. Når du merker et område som besøkt eller utplukka nullstilles det automatisk 31. desember, slik at det dukker opp som ikke besøkt igjen neste sesong.</p>
+        <p class="dialog-body">Trykk og hold på kartet for å legge til et nytt bærområde.</p>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:var(--color-neutral-900);color:var(--color-neutral-100);padding:8px 16px;border-radius:999px;font-size:16px;box-shadow:var(--shadow-lg);z-index:2000">{{ toast }}</div>
+  </sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const KEY = 'baerkart_markers_v1';
+const BERRY_LABELS = { blabaer: 'Blåbær', tyttebaer: 'Tyttebær', multer: 'Multer' };
+const BERRY_COLORS = { blabaer: '#3b6ea8', tyttebaer: 'hsl(0,60%,55%)', multer: '#d9a536' };
+const BERRY_COLORS_SUBTLE = { blabaer: 'hsl(211,40%,67%)', tyttebaer: 'hsl(0,47%,67%)', multer: 'hsl(43,68%,75%)' };
+const TOGGLE_TRACK_COLOR = 'hsl(45,7%,98%)';
+const RATING_LABELS = { 1: '★☆☆☆☆', 2: '★★☆☆☆', 3: '★★★☆☆', 4: '★★★★☆', 5: '★★★★★' };
+const TILE_URL = 'https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png';
+const CHECKBOX_CHECKED_PATH = 'm429-336 238-237-51-51-187 186-85-84-51 51 136 135ZM216-144q-29.7 0-50.85-21.15Q144-186.3 144-216v-528q0-29.7 21.15-50.85Q186.3-816 216-816h528q29.7 0 50.85 21.15Q816-773.7 816-744v528q0 29.7-21.15 50.85Q773.7-144 744-144H216Zm0-72h528v-528H216v528Zm0-528v528-528Z';
+const CHECKBOX_BLANK_PATH = 'M216-144q-29.7 0-50.85-21.15Q144-186.3 144-216v-528q0-29.7 21.15-50.85Q186.3-816 216-816h528q29.7 0 50.85 21.15Q816-773.7 816-744v528q0 29.7-21.15 50.85Q773.7-144 744-144H216Zm0-72h528v-528H216v528Z';
+const CURRENT_USER = localStorage.getItem('baer_user') || sessionStorage.getItem('baer_user');
+const SUPABASE_URL = 'https://wpbjdxldmvkmljaokgxn.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwYmpkeGxkbXZrbWxqYW9rZ3huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4NzEzNDgsImV4cCI6MjEwMjQ0NzM0OH0.Z2VLSYK15U27nYE-bKFZa3Bo6kjZRV7RlPfx-uzaEys';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+function mapField(f, pickedAt, lastPicked) {
+  return { id: f.id, lat: f.lat, lng: f.lng, name: f.name, berryTypes: f.berry_types, rating: f.rating, note: f.note, photo: f.photo_url, depleted: f.depleted, addedBy: f.created_by, addedDate: (f.created_at || '').slice(0, 10), pickedAt: pickedAt || null, lastPicked: lastPicked || '' };
+}
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.mapRef = React.createRef();
+    this.fileInputRef = React.createRef();
+    this._sheetEl = null;
+    if (!CURRENT_USER) { window.location.href = './Login.dc.html'; }
+    this.state = {
+      markers: [],
+      filterTypes: { blabaer: true, tyttebaer: true, multer: true },
+      showPicked: true,
+      addOpen: false,
+      editingId: null,
+      draftLat: null, draftLng: null,
+      draft: { name: '', berryTypes: ['blabaer'], rating: 3, note: '', photo: null, lastPicked: '' },
+      searchQuery: '',
+      detailId: null,
+      confirmDeleteId: null,
+      legendOpen: false,
+      toast: null,
+      visitLog: [],
+    };
+    this._prevMarkers = this.state.markers;
+    this._prevFilterTypes = this.state.filterTypes;
+    this._prevShowPicked = this.state.showPicked;
+  }
+
+  async fetchData() {
+    const year = new Date().getFullYear();
+    const [{ data: fields, error: fErr }, { data: visits, error: vErr }] = await Promise.all([
+      sb.from('berry_fields').select('*'),
+      sb.from('visits').select('*').eq('username', CURRENT_USER).eq('season', year),
+    ]);
+    if (fErr) { this.showToast('Klarte ikke å hente bærfelt'); return; }
+    const visitByField = {};
+    (visits || []).forEach(v => { visitByField[v.field_id] = v; });
+    const markers = (fields || []).map(f => {
+      const v = visitByField[f.id];
+      return mapField(f, v ? v.visited_at : null, v ? v.visited_at.slice(0, 10) : '');
+    });
+    this.setState({ markers });
+  }
+
+  async loadVisitLog(fieldId) {
+    const { data } = await sb.from('visits').select('username, visited_at').eq('field_id', fieldId).order('visited_at', { ascending: false });
+    this.setState({ visitLog: (data || []).map(v => ({ name: v.username, date: new Date(v.visited_at).toLocaleDateString('nb-NO') })) });
+  }
+
+  async uploadPhoto(photo) {
+    if (!photo || !photo.startsWith('data:')) return photo || null;
+    const blob = await (await fetch(photo)).blob();
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+    const { error } = await sb.storage.from('berry-photos').upload(fileName, blob, { contentType: 'image/jpeg' });
+    if (error) { this.showToast('Klarte ikke å laste opp bilde'); return null; }
+    return sb.storage.from('berry-photos').getPublicUrl(fileName).data.publicUrl;
+  }
+
+  attachMap(node) {
+    if (!node || this._mapInited || !window.L) return;
+    this._mapInited = true;
+    this.leaflet = window.L.map(node, { zoomControl: false }).setView([61.5, 8.5], 5);
+    window.L.tileLayer(TILE_URL, { attribution: '© Kartverket', maxZoom: 18 }).addTo(this.leaflet);
+    this.markersLayer = window.L.layerGroup().addTo(this.leaflet);
+    this.leaflet.on('contextmenu', (e) => { this.openAddDialog(e.latlng); });
+    this.leaflet.on('mousedown', (e) => {
+      if (e.originalEvent.button !== 0) return;
+      this._longPressLatlng = e.latlng;
+      this._longPressTimer = setTimeout(() => this.openAddDialog(this._longPressLatlng), 550);
+    });
+    ['mouseup', 'mousemove', 'dragstart'].forEach(ev => this.leaflet.on(ev, () => clearTimeout(this._longPressTimer)));
+    this.leaflet.on('touchstart', (e) => {
+      this._longPressLatlng = e.latlng;
+      this._longPressTimer = setTimeout(() => this.openAddDialog(this._longPressLatlng), 550);
+    });
+    ['touchend', 'touchmove', 'touchcancel'].forEach(ev => this.leaflet.on(ev, () => clearTimeout(this._longPressTimer)));
+    this.renderMarkers();
+    setTimeout(() => this.leaflet && this.leaflet.invalidateSize(), 200);
+    this._resizeHandler = () => this.leaflet && this.leaflet.invalidateSize();
+    window.addEventListener('resize', this._resizeHandler);
+    this.locate();
+    this.fetchData();
+  }
+
+  componentWillUnmount() {
+    if (this._resizeHandler) window.removeEventListener('resize', this._resizeHandler);
+  }
+
+  measureSheet() {
+    const h = this._sheetEl ? this._sheetEl.getBoundingClientRect().height : 0;
+    if (h !== this.state.sheetHeight) this.setState({ sheetHeight: h });
+  }
+
+  componentDidUpdate() {
+    this.measureSheet();
+    const { markers, filterTypes, showPicked, searchQuery } = this.state;
+    if (this._prevMarkers !== markers || this._prevFilterTypes !== filterTypes || this._prevShowPicked !== showPicked) {
+      this.renderMarkers();
+    }
+    this._prevMarkers = markers;
+    this._prevFilterTypes = filterTypes;
+    this._prevShowPicked = showPicked;
+  }
+
+  renderMarkers() {
+    if (!this.markersLayer) return;
+    this.markersLayer.clearLayers();
+    const filtered = this.state.markers.filter(m => {
+      const types = m.berryTypes || [m.berryType];
+      return types.some(t => this.state.filterTypes[t]) && (this.state.showPicked || !m.pickedAt);
+    });
+    const CHECK_SVG = '<svg width="20" height="20" viewBox="0 -960 960 960" fill="currentColor"><path d="M389-267 195-460l51-52 143 143 325-324 51 51-376 375Z"/></svg>';
+    const CLOSE_SVG = '<svg width="20" height="20" viewBox="0 -960 960 960" fill="currentColor"><path d="m291-240-51-51 189-189-189-189 51-51 189 189 189-189 51 51-189 189 189 189-51 51-189-189-189 189Z"/></svg>';
+    filtered.forEach(m => {
+      const badge = m.depleted ? CLOSE_SVG : (m.pickedAt ? CHECK_SVG : '');
+      const types = (m.berryTypes || [m.berryType]).slice().sort();
+      const W = 42 + (types.length - 1) * 6;
+      const circles = types.map((t, i) => {
+        const isLast = i === types.length - 1;
+        const label = types.length === 1 ? (t === 'blabaer' ? 'B' : t === 'tyttebaer' ? 'T' : 'M') : (isLast ? '+' : '');
+        return `<div style="position:absolute;left:${i * 6}px;top:0;width:42px;height:42px;border-radius:50%;background:${BERRY_COLORS[t]};border:3px solid hsl(45,7%,15%);z-index:${i + 1};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:16px;opacity:${(m.depleted || m.pickedAt) ? 0.55 : 1}">${label}${isLast && badge ? `<span style="position:absolute;bottom:-4px;right:-4px;width:20px;height:20px;border-radius:50%;background:hsl(45,7%,15%);display:flex;align-items:center;justify-content:center">${badge}</span>` : ''}</div>`;
+      }).join('');
+      const icon = window.L.divIcon({
+        className: '',
+        html: `<div style="position:relative;width:${W}px;height:42px">${circles}</div>`,
+        iconSize: [W, 42], iconAnchor: [21, 21],
+      });
+      const mk = window.L.marker([m.lat, m.lng], { icon }).addTo(this.markersLayer);
+      mk.on('click', () => {
+        this.setState({ detailId: m.id, confirmDeleteId: null, detailEntering: true });
+        requestAnimationFrame(() => requestAnimationFrame(() => this.setState({ detailEntering: false })));
+        this.centerOnMarkerAboveSheet(m.lat, m.lng);
+        this.loadVisitLog(m.id);
+      });
+    });
+  }
+
+  centerOnMarkerAboveSheet(lat, lng) {
+    if (!this.leaflet) return;
+    requestAnimationFrame(() => {
+      const sheetH = this._sheetEl ? this._sheetEl.getBoundingClientRect().height : 0;
+      const mapH = this.leaflet.getSize().y;
+      const visibleH = mapH - sheetH;
+      const targetPoint = this.leaflet.project([lat, lng], this.leaflet.getZoom()).subtract([0, visibleH / 2 - mapH / 2]);
+      this.leaflet.panTo(this.leaflet.unproject(targetPoint, this.leaflet.getZoom()), { animate: true });
+    });
+  }
+
+  goToSearch() {
+    const q = (this.state.searchQuery || '').trim();
+    if (!q || !this.leaflet) return;
+    const qLower = q.toLowerCase();
+    const match = this.state.markers.find(m => (m.name || '').toLowerCase().includes(qLower));
+    if (match) {
+      this.leaflet.setView([match.lat, match.lng], 15);
+      this.setState({ detailId: match.id, confirmDeleteId: null, detailEntering: true, searchQuery: '', searchResults: [] });
+      requestAnimationFrame(() => requestAnimationFrame(() => this.setState({ detailEntering: false })));
+      this.centerOnMarkerAboveSheet(match.lat, match.lng);
+      this.loadVisitLog(match.id);
+      return;
+    }
+    fetch(`https://ws.geonorge.no/stedsnavn/v1/navn?sok=${encodeURIComponent(q)}*&treffPerSide=1&utkoordsys=4258`)
+      .then(r => r.json())
+      .then(data => {
+        const sted = data && data.navn && data.navn[0];
+        const pt = sted && sted.representasjonspunkt;
+        if (pt) this.leaflet.setView([pt.nord, pt.øst], 13);
+        else this.showToast('Fant ikke stedet');
+      })
+      .catch(() => this.showToast('Fant ikke stedet'));
+  }
+
+  goToResult(result) {
+    if (!this.leaflet) return;
+    if (result.type === 'field') {
+      this.leaflet.setView([result.lat, result.lng], 15);
+      this.setState({ detailId: result.id, confirmDeleteId: null, detailEntering: true, searchQuery: '', searchResults: [] });
+      requestAnimationFrame(() => requestAnimationFrame(() => this.setState({ detailEntering: false })));
+      this.centerOnMarkerAboveSheet(result.lat, result.lng);
+      this.loadVisitLog(result.id);
+    } else {
+      this.leaflet.setView([result.lat, result.lng], 13);
+      this.setState({ searchQuery: '', searchResults: [] });
+    }
+  }
+
+  updateSearchResults(q) {
+    clearTimeout(this._searchDebounce);
+    const query = (q || '').trim();
+    if (!query) { this.setState({ searchResults: [] }); return; }
+    const qLower = query.toLowerCase();
+    const fieldMatches = this.state.markers
+      .filter(m => (m.name || '').toLowerCase().includes(qLower))
+      .slice(0, 3)
+      .map(m => ({ id: m.id, lat: m.lat, lng: m.lng, type: 'field', label: `${m.name || 'Bærfelt'} (bærfelt)` }));
+    this._searchDebounce = setTimeout(() => {
+      fetch(`https://ws.geonorge.no/stedsnavn/v1/navn?sok=${encodeURIComponent(query)}*&treffPerSide=${3 - fieldMatches.length}&utkoordsys=4258`)
+        .then(r => r.json())
+        .then(data => {
+          const steder = (data && data.navn) || [];
+          const placeMatches = steder.slice(0, 3 - fieldMatches.length).map((s, i) => ({
+            id: 'place-' + i, lat: s.representasjonspunkt.nord, lng: s.representasjonspunkt.øst,
+            type: 'place', label: `${s.skrivemåte} (sted)`,
+          }));
+          if (this.state.searchQuery.trim() === query) this.setState({ searchResults: [...fieldMatches, ...placeMatches] });
+        })
+        .catch(() => { if (this.state.searchQuery.trim() === query) this.setState({ searchResults: fieldMatches }); });
+    }, 300);
+    this.setState({ searchResults: fieldMatches });
+  }
+
+  renderUserMarker() {
+    if (!this.leaflet || !this.state.userPos) return;
+    if (this.userMarker) this.leaflet.removeLayer(this.userMarker);
+    const heading = this.state.userHeading || 0;
+    const icon = window.L.divIcon({
+      className: '',
+      html: `<div style="width:60px;height:60px;transform:rotate(${heading}deg);display:flex;align-items:center;justify-content:center">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="hsl(45,7%,15%)" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2 L20 20 L12 16 L4 20 Z"/></svg>
+      </div>`,
+      iconSize: [60, 60], iconAnchor: [30, 30],
+    });
+    this.userMarker = window.L.marker([this.state.userPos.lat, this.state.userPos.lng], { icon }).addTo(this.leaflet);
+  }
+
+  showToast(msg) {
+    this.setState({ toast: msg });
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => this.setState({ toast: null }), 2200);
+  }
+
+  locate() {
+    // Dummy posisjon inntil ekte GPS er koblet til: Kobberdammen ved Trondheim
+    const latitude = 63.3915, longitude = 10.3475;
+    this.setState({ userPos: { lat: latitude, lng: longitude } }, () => this.renderUserMarker());
+    if (this.leaflet) this.leaflet.setView([latitude, longitude], 14);
+  }
+
+  openAddDialog(latlng) {
+    this.setState({
+      addOpen: true, editingId: null,
+      draftLat: latlng.lat, draftLng: latlng.lng,
+      draft: { name: '', berryTypes: ['blabaer'], rating: 3, note: '', photo: null, lastPicked: '' },
+    });
+  }
+  openEditFromDetail() {
+    const m = this.state.markers.find(x => x.id === this.state.detailId);
+    if (!m) return;
+    this.setState({
+      addOpen: true, editingId: m.id, detailId: null,
+      draftLat: m.lat, draftLng: m.lng,
+      draft: { name: m.name || '', berryTypes: m.berryTypes || [m.berryType], rating: m.rating, note: m.note, photo: m.photo, lastPicked: m.lastPicked || '' },
+    });
+  }
+  closeAddDialog() { this.setState({ addOpen: false }); }
+
+  setDraft(patch) { this.setState(s => ({ draft: { ...s.draft, ...patch } })); }
+
+  async saveDraft() {
+    const { draft, draftLat, draftLng, editingId } = this.state;
+    if (draftLat == null) return;
+    const photoUrl = await this.uploadPhoto(draft.photo);
+    const row = { name: draft.name, berry_types: draft.berryTypes, rating: draft.rating, note: draft.note, photo_url: photoUrl, lat: draftLat, lng: draftLng };
+    if (editingId) {
+      const { error } = await sb.from('berry_fields').update(row).eq('id', editingId);
+      if (error) { this.showToast('Klarte ikke å lagre'); return; }
+      this.setState(s => ({
+        markers: s.markers.map(m => m.id === editingId ? { ...m, ...draft, photo: photoUrl } : m),
+        addOpen: false,
+      }));
+    } else {
+      row.created_by = CURRENT_USER;
+      const { data, error } = await sb.from('berry_fields').insert(row).select().single();
+      if (error || !data) { this.showToast('Klarte ikke å lagre'); return; }
+      this.setState(s => ({ markers: [...s.markers, mapField(data)], addOpen: false }));
+    }
+    this.showToast('Lagret');
+  }
+
+  onPhotoChange(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = () => {
+      img.onload = () => {
+        const maxW = 800;
+        const scale = Math.min(1, maxW / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        this.setDraft({ photo: canvas.toDataURL('image/jpeg', 0.7) });
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  }
+  triggerFileInput() { if (this.fileInputRef.current) this.fileInputRef.current.click(); }
+
+  closeDetail() {
+    this.setState({ detailClosing: true });
+    clearTimeout(this._detailCloseTimer);
+    this._detailCloseTimer = setTimeout(() => this.setState({ detailId: null, detailClosing: false, confirmDeleteId: null }), 280);
+  }
+  askDelete() { this.setState({ confirmDeleteId: this.state.detailId }); }
+  cancelDelete() { this.setState({ confirmDeleteId: null }); }
+  async confirmDelete() {
+    const id = this.state.confirmDeleteId;
+    await sb.from('berry_fields').delete().eq('id', id);
+    this.setState(s => ({ markers: s.markers.filter(m => m.id !== id), detailId: null, confirmDeleteId: null }));
+    this.showToast('Slettet');
+  }
+  toggleBerryType(current, type) {
+    if (current.includes(type)) {
+      const next = current.filter(t => t !== type);
+      return next.length ? next : current;
+    }
+    return [...current, type];
+  }
+
+  async toggleDepleted() {
+    const id = this.state.detailId;
+    const m = this.state.markers.find(x => x.id === id);
+    if (!m) return;
+    const next = !m.depleted;
+    this.setState(s => ({ markers: s.markers.map(x => x.id === id ? { ...x, depleted: next } : x) }));
+    await sb.from('berry_fields').update({ depleted: next }).eq('id', id);
+  }
+  async checkIn() {
+    const id = this.state.detailId;
+    const m = this.state.markers.find(x => x.id === id);
+    if (!m) return;
+    const year = new Date().getFullYear();
+    if (m.pickedAt) {
+      await sb.from('visits').delete().eq('field_id', id).eq('username', CURRENT_USER).eq('season', year);
+      this.setState(s => ({ markers: s.markers.map(x => x.id === id ? { ...x, pickedAt: null, lastPicked: '' } : x) }));
+    } else {
+      const now = new Date().toISOString();
+      await sb.from('visits').insert({ field_id: id, username: CURRENT_USER, season: year });
+      this.setState(s => ({ markers: s.markers.map(x => x.id === id ? { ...x, pickedAt: now, lastPicked: todayStr() } : x) }));
+    }
+    this.loadVisitLog(id);
+  }
+
+  openLegend() {
+    this.setState({ legendOpen: true, legendClosing: false, legendEntering: true });
+    requestAnimationFrame(() => requestAnimationFrame(() => this.setState({ legendEntering: false })));
+  }
+  closeLegend() {
+    this.setState({ legendClosing: true });
+    clearTimeout(this._legendCloseTimer);
+    this._legendCloseTimer = setTimeout(() => this.setState({ legendOpen: false, legendClosing: false }), 280);
+  }
+
+  renderVals() {
+    const s = this.state;
+    const detailMarker = s.markers.find(m => m.id === s.detailId) || null;
+    return {
+      mapRef: (node) => this.attachMap(node),
+      fileInputRef: this.fileInputRef,
+      sheetRef: (node) => { this._sheetEl = node; if (node) requestAnimationFrame(() => this.measureSheet()); },
+      actionBarBottom: '16px',
+      detailSheetTransform: (s.detailClosing || s.detailEntering) ? 'translateY(100%)' : 'translateY(0)',
+      legendSheetTransform: (s.legendClosing || s.legendEntering) ? 'translateY(100%)' : 'translateY(0)',
+      detailSheetEasing: 'ease-in-out',
+      searchBarTransform: (s.legendOpen || s.legendClosing || detailMarker || s.detailClosing) ? 'translateY(-120px)' : 'translateY(0)',
+      locate: () => this.locate(),
+      openLegend: () => this.openLegend(),
+      closeLegend: () => this.closeLegend(),
+      legendOpen: s.legendOpen,
+      toast: s.toast,
+
+      filterBlabaerActive: s.filterTypes.blabaer,
+      filterTyttebaerActive: s.filterTypes.tyttebaer,
+      filterMulterActive: s.filterTypes.multer,
+      blabaerColor: BERRY_COLORS.blabaer,
+      tyttebaerColor: BERRY_COLORS.tyttebaer,
+      multerColor: BERRY_COLORS.multer,
+      blabaerThumbTransform: s.filterTypes.blabaer ? 'translateX(16px)' : 'translateX(0)',
+      tyttebaerThumbTransform: s.filterTypes.tyttebaer ? 'translateX(16px)' : 'translateX(0)',
+      multerThumbTransform: s.filterTypes.multer ? 'translateX(16px)' : 'translateX(0)',
+      blabaerThumbColor: s.filterTypes.blabaer ? BERRY_COLORS.blabaer : BERRY_COLORS_SUBTLE.blabaer,
+      tyttebaerThumbColor: s.filterTypes.tyttebaer ? BERRY_COLORS.tyttebaer : BERRY_COLORS_SUBTLE.tyttebaer,
+      multerThumbColor: s.filterTypes.multer ? BERRY_COLORS.multer : BERRY_COLORS_SUBTLE.multer,
+      blabaerTrackBg: TOGGLE_TRACK_COLOR,
+      tyttebaerTrackBg: TOGGLE_TRACK_COLOR,
+      multerTrackBg: TOGGLE_TRACK_COLOR,
+      toggleFilterBlabaer: () => this.setState(st => ({ filterTypes: { ...st.filterTypes, blabaer: !st.filterTypes.blabaer } })),
+      toggleFilterTyttebaer: () => this.setState(st => ({ filterTypes: { ...st.filterTypes, tyttebaer: !st.filterTypes.tyttebaer } })),
+      toggleFilterMulter: () => this.setState(st => ({ filterTypes: { ...st.filterTypes, multer: !st.filterTypes.multer } })),
+
+      addOpen: s.addOpen,
+      addDialogTitle: s.editingId ? 'Rediger område' : 'Nytt bærområde',
+      draft: s.draft,
+      hasDraftPhoto: !!s.draft.photo,
+      draftHasBlabaer: s.draft.berryTypes.includes('blabaer'),
+      draftHasTyttebaer: s.draft.berryTypes.includes('tyttebaer'),
+      draftHasMulter: s.draft.berryTypes.includes('multer'),
+      toggleDraftBlabaer: () => this.setDraft({ berryTypes: this.toggleBerryType(s.draft.berryTypes, 'blabaer') }),
+      toggleDraftTyttebaer: () => this.setDraft({ berryTypes: this.toggleBerryType(s.draft.berryTypes, 'tyttebaer') }),
+      toggleDraftMulter: () => this.setDraft({ berryTypes: this.toggleBerryType(s.draft.berryTypes, 'multer') }),
+      starValues: [1, 2, 3, 4, 5].map(n => ({
+        onClick: () => this.setDraft({ rating: n }),
+        fill: n <= s.draft.rating ? '#d9a536' : 'none',
+        stroke: n <= s.draft.rating ? '#d9a536' : 'var(--color-neutral-500)',
+      })),
+      setDraftLastPicked: (e) => this.setDraft({ lastPicked: e.target.value }),
+      setDraftNote: (e) => this.setDraft({ note: e.target.value }),
+      setDraftName: (e) => this.setDraft({ name: e.target.value }),
+      searchQuery: s.searchQuery,
+      setSearchQuery: (e) => { this.setState({ searchQuery: e.target.value }); this.updateSearchResults(e.target.value); },
+      handleSearchKeyDown: (e) => { if (e.key === 'Enter') this.goToSearch(); },
+      hasSearchResults: !!(s.searchResults && s.searchResults.length),
+      searchResults: (s.searchResults || []).map(r => ({ label: r.label, onClick: () => this.goToResult(r) })),
+      onPhotoChange: (e) => this.onPhotoChange(e),
+      triggerFileInput: () => this.triggerFileInput(),
+      photoButtonLabel: s.draft.photo ? 'Bytt bilde' : 'Legg til bilde',
+      closeAddDialog: () => this.closeAddDialog(),
+      saveDraft: () => this.saveDraft(),
+
+      detailOpen: !!detailMarker,
+      detailMarkerName: detailMarker ? (detailMarker.name || 'Bærfelt') : '',
+      detailMarkerAddedBy: detailMarker ? (detailMarker.addedBy || CURRENT_USER) : '',
+      detailMarkerBerryLabel: detailMarker ? (detailMarker.berryTypes || [detailMarker.berryType]).map(t => BERRY_LABELS[t]).join(', ') : '',
+      detailMarkerColor: detailMarker ? BERRY_COLORS[(detailMarker.berryTypes || [detailMarker.berryType])[0]] : 'transparent',
+      detailBerryDots: detailMarker ? (detailMarker.berryTypes || [detailMarker.berryType]).slice().sort().map((t, i) => ({ color: BERRY_COLORS[t], marginLeft: i === 0 ? '0' : '-4px' })) : [],
+      detailMarkerRatingLabel: detailMarker ? RATING_LABELS[detailMarker.rating] : '',
+      detailStarValues: [1, 2, 3, 4, 5].map(n => ({
+        fill: detailMarker && n <= detailMarker.rating ? '#d9a536' : 'none',
+        stroke: detailMarker && n <= detailMarker.rating ? '#d9a536' : 'var(--color-neutral-500)',
+      })),
+      detailMarkerPickedLabel: detailMarker && detailMarker.pickedAt ? new Date(detailMarker.pickedAt).toLocaleDateString('nb-NO') : null,
+      detailMarkerPhoto: detailMarker ? detailMarker.photo : null,
+      hasDetailPhoto: !!(detailMarker && detailMarker.photo),
+      detailMarkerNote: detailMarker ? detailMarker.note : null,
+      detailMarkerLastPickedLabel: detailMarker && detailMarker.lastPicked ? new Date(detailMarker.lastPicked).toLocaleDateString('nb-NO') : null,
+      showConfirmDelete: !!(detailMarker && s.confirmDeleteId === detailMarker.id),
+      closeDetail: () => this.closeDetail(),
+      askDelete: () => this.askDelete(),
+      cancelDelete: () => this.cancelDelete(),
+      confirmDelete: () => this.confirmDelete(),
+      openEditFromDetail: () => this.openEditFromDetail(),
+      checkIn: () => this.checkIn(),
+      toggleDepleted: () => this.toggleDepleted(),
+      depletedButtonLabel: detailMarker && detailMarker.depleted ? 'Fjern utplukka' : 'Merk som utplukka',
+      visitedButtonLabel: detailMarker && detailMarker.pickedAt ? 'Merk som ikke besøkt' : 'Merk som besøkt',
+      depletedCheckboxPath: React.createElement('path', { d: (detailMarker && detailMarker.depleted) ? CHECKBOX_CHECKED_PATH : CHECKBOX_BLANK_PATH }),
+      visitedCheckboxPath: React.createElement('path', { d: (detailMarker && detailMarker.pickedAt) ? CHECKBOX_CHECKED_PATH : CHECKBOX_BLANK_PATH }),
+      visitLog: s.visitLog,
+      hasVisitLog: !!(s.visitLog && s.visitLog.length),
+      detailMarkerDepleted: !!(detailMarker && detailMarker.depleted),
+    };
+  }
+}
+
+</script>
+</body>
+</html>
