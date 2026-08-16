@@ -46,6 +46,9 @@
     .tag { font-size: 14px !important; }
     @keyframes sheet-in { from { transform: translateY(100%); } to { transform: translateY(0); } }
     .sheet-anim { animation: sheet-in 300ms ease-out; }
+    @keyframes userPulseScale { 0% { width: 28px; height: 28px; } 63.16% { width: 80px; height: 80px; } 100% { width: 80px; height: 80px; } }
+    @keyframes userPulseFade { 0% { opacity: 1; } 14.58% { opacity: 1; } 63.16% { opacity: 0; } 100% { opacity: 0; } }
+    .user-pulse-ring { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); border-radius: 50%; border: 1px solid #ffffff; animation: userPulseScale 1900ms ease-in-out infinite, userPulseFade 1900ms ease-in-out infinite; z-index: 0; }
   </style>
 </helmet>
 <div style="display:flex;flex-direction:column;height:100dvh;background:var(--color-bg);overflow:hidden">
@@ -283,6 +286,7 @@
 <script type="text/x-dc" data-dc-script>
 const KEY = 'baerkart_markers_v1';
 const BERRY_LABELS = { blabaer: 'Blåbær', tyttebaer: 'Tyttebær', multer: 'Multer', bringebaer: 'Bringebær' };
+const BERRY_MARKER_LETTER = { blabaer: 'B', tyttebaer: 'T', multer: 'M', bringebaer: 'Br' };
 const BERRY_COLORS = { blabaer: '#3b6ea8', tyttebaer: 'hsl(0,60%,55%)', multer: '#d9a536', bringebaer: '#D92A6A' };
 const BERRY_COLORS_SUBTLE = { blabaer: 'hsl(211,40%,67%)', tyttebaer: 'hsl(0,47%,67%)', multer: 'hsl(43,68%,75%)', bringebaer: 'hsl(350,50%,75%)' };
 const BERRY_ORDER = ['blabaer', 'tyttebaer', 'multer', 'bringebaer'];
@@ -420,7 +424,7 @@ class Component extends DCLogic {
       const W = 42 + (types.length - 1) * 6;
       const circles = types.map((t, i) => {
         const isLast = i === types.length - 1;
-        const label = types.length === 1 ? BERRY_LABELS[t][0] : (isLast ? '+' : '');
+        const label = types.length === 1 ? BERRY_MARKER_LETTER[t] : (isLast ? '+' : '');
         return `<div style="position:absolute;left:${i * 6}px;top:0;width:42px;height:42px;border-radius:50%;background:${BERRY_COLORS[t]};border:3px solid hsl(45,7%,15%);z-index:${i + 1};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:16px;opacity:${(m.depleted || m.pickedAt) ? 0.55 : 1}">${label}${isLast && badge ? `<span style="position:absolute;bottom:-4px;right:-4px;width:20px;height:20px;border-radius:50%;background:hsl(45,7%,15%);display:flex;align-items:center;justify-content:center">${badge}</span>` : ''}</div>`;
       }).join('');
       const icon = window.L.divIcon({
@@ -515,11 +519,11 @@ class Component extends DCLogic {
   renderUserMarker() {
     if (!this.leaflet || !this.state.userPos) return;
     if (this.userMarker) this.leaflet.removeLayer(this.userMarker);
-    const heading = this.state.userHeading || 0;
     const icon = window.L.divIcon({
       className: '',
-      html: `<div style="width:60px;height:60px;transform:rotate(${heading}deg);display:flex;align-items:center;justify-content:center">
-        <svg width="52" height="52" viewBox="0 0 24 24" fill="hsl(45,7%,15%)" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2 L20 20 L12 16 L4 20 Z"/></svg>
+      html: `<div style="position:relative;width:60px;height:60px;display:flex;align-items:center;justify-content:center;overflow:visible">
+        <div style="position:relative;z-index:1;width:32px;height:32px;border-radius:50%;background:#3358C7;border:6px solid #fff;box-shadow:0 0 20px rgba(0,0,0,0.25)"></div>
+        <div class="user-pulse-ring" style="z-index:2"></div>
       </div>`,
       iconSize: [60, 60], iconAnchor: [30, 30],
     });
