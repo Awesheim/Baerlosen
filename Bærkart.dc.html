@@ -3,6 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<link rel="icon" href="./icon-512.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bærlosen">
+<meta name="theme-color" content="#c67139">
 <script src="./support.js"></script>
 </head>
 <body>
@@ -96,12 +102,22 @@
           <input class="input" type="text" placeholder="F.eks. Kobberdammen nord" value="{{ draft.name }}" onChange="{{ setDraftName }}">
         </div>
 
-        <div class="field">
-          <div class="seg" style="margin-top:4px;display:flex">
-            <label class="seg-opt" id="seg-blabaer" style="flex:1;justify-content:center"><input type="checkbox" checked="{{ draftHasBlabaer }}" onChange="{{ toggleDraftBlabaer }}"><span>Blåbær</span></label>
-            <label class="seg-opt" id="seg-tyttebaer" style="flex:1;justify-content:center"><input type="checkbox" checked="{{ draftHasTyttebaer }}" onChange="{{ toggleDraftTyttebaer }}"><span>Tyttebær</span></label>
-            <label class="seg-opt" id="seg-multer" style="flex:1;justify-content:center"><input type="checkbox" checked="{{ draftHasMulter }}" onChange="{{ toggleDraftMulter }}"><span>Multer</span></label>
-          </div>
+        <div class="field" style="position:relative">
+          <button type="button" class="input" onClick="{{ toggleBerryDropdown }}" style="display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;cursor:pointer;font-family:var(--font-body)">
+            <span>{{ draftBerryTypesLabel }}</span>
+            <svg width="18" height="18" viewBox="0 -960 960 960" fill="currentColor" style="flex:none;transform:{{ berryDropdownArrowTransform }};transition:transform 150ms ease"><path d="M480-345 240-585l56-56 184 184 184-184 56 56-240 240Z"/></svg>
+          </button>
+          <sc-if value="{{ berryDropdownOpen }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ closeBerryDropdown }}" style="position:fixed;inset:0;z-index:1049"></div>
+            <div style="position:absolute;top:100%;left:0;right:0;margin-top:4px;background:hsl(45,7%,98%);border:1px solid hsl(45,7%,80%);border-radius:var(--radius-md);z-index:1050;overflow:hidden">
+              <sc-for list="{{ berryTypeOptions }}" as="opt" hint-placeholder-count="4">
+                <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;font-size:16px">
+                  <input type="checkbox" checked="{{ opt.checked }}" onChange="{{ opt.onChange }}" style="width:18px;height:18px;accent-color:{{ opt.color }}">
+                  <span>{{ opt.label }}</span>
+                </label>
+              </sc-for>
+            </div>
+          </sc-if>
         </div>
 
         <div class="field">
@@ -123,7 +139,7 @@
         <div class="field">
           <input type="file" accept="image/*" ref="{{ fileInputRef }}" onChange="{{ onPhotoChange }}" style="display:none">
           <sc-if value="{{ hasDraftPhoto }}" hint-placeholder-val="{{ false }}">
-            <img src="{{ draft.photo }}" style="width:100%;height:130px;object-fit:cover;border-radius:var(--radius-md);margin-top:6px">
+            <img ref="{{ draftPhotoRef }}" style="width:100%;height:130px;object-fit:cover;border-radius:var(--radius-md);margin-top:6px">
           </sc-if>
           <button class="btn btn-secondary btn-block" onClick="{{ triggerFileInput }}">
             <svg width="16" height="16" viewBox="0 -960 960 960" fill="currentColor"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5t-48 119q0 69.5 48 118.5t120 49Zm0-72q-42 0-69-28.13T384-433q0-39.9 27-67.45Q438-528 480-528t69 27.55q27 27.55 27 67.45 0 40.74-27 68.87Q522-336 480-336ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l72-96h240l72 96h120q29.7 0 50.85 21.5Q864-677 864-648v432q0 29-21.15 50.5T792-144H168Zm0-72h624v-432H636l-72.1-96H396l-72 96H168v432Zm312-217Z"/></svg>
@@ -198,7 +214,7 @@
         </sc-if>
 
         <sc-if value="{{ hasDetailPhoto }}" hint-placeholder-val="{{ false }}">
-          <img src="{{ detailMarkerPhoto }}" style="width:100%;height:150px;object-fit:cover;border-radius:var(--radius-md)">
+          <img ref="{{ detailPhotoRef }}" style="width:100%;height:150px;object-fit:cover;border-radius:var(--radius-md)">
         </sc-if>
 
         <sc-if value="{{ detailMarkerLastPickedLabel }}" hint-placeholder-val="{{ false }}">
@@ -262,9 +278,10 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 const KEY = 'baerkart_markers_v1';
-const BERRY_LABELS = { blabaer: 'Blåbær', tyttebaer: 'Tyttebær', multer: 'Multer' };
-const BERRY_COLORS = { blabaer: '#3b6ea8', tyttebaer: 'hsl(0,60%,55%)', multer: '#d9a536' };
-const BERRY_COLORS_SUBTLE = { blabaer: 'hsl(211,40%,67%)', tyttebaer: 'hsl(0,47%,67%)', multer: 'hsl(43,68%,75%)' };
+const BERRY_LABELS = { blabaer: 'Blåbær', tyttebaer: 'Tyttebær', multer: 'Multer', bringebaer: 'Bringebær' };
+const BERRY_COLORS = { blabaer: '#3b6ea8', tyttebaer: 'hsl(0,60%,55%)', multer: '#d9a536', bringebaer: 'hsl(350,65%,55%)' };
+const BERRY_COLORS_SUBTLE = { blabaer: 'hsl(211,40%,67%)', tyttebaer: 'hsl(0,47%,67%)', multer: 'hsl(43,68%,75%)', bringebaer: 'hsl(350,50%,75%)' };
+const BERRY_ORDER = ['blabaer', 'tyttebaer', 'multer', 'bringebaer'];
 const TOGGLE_TRACK_COLOR = 'hsl(45,7%,98%)';
 const RATING_LABELS = { 1: '★☆☆☆☆', 2: '★★☆☆☆', 3: '★★★☆☆', 4: '★★★★☆', 5: '★★★★★' };
 const TILE_URL = 'https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png';
@@ -301,6 +318,7 @@ class Component extends DCLogic {
       legendOpen: false,
       toast: null,
       visitLog: [],
+      berryDropdownOpen: false,
     };
     this._prevMarkers = this.state.markers;
     this._prevFilterTypes = this.state.filterTypes;
@@ -398,7 +416,7 @@ class Component extends DCLogic {
       const W = 42 + (types.length - 1) * 6;
       const circles = types.map((t, i) => {
         const isLast = i === types.length - 1;
-        const label = types.length === 1 ? (t === 'blabaer' ? 'B' : t === 'tyttebaer' ? 'T' : 'M') : (isLast ? '+' : '');
+        const label = types.length === 1 ? BERRY_LABELS[t][0] : (isLast ? '+' : '');
         return `<div style="position:absolute;left:${i * 6}px;top:0;width:42px;height:42px;border-radius:50%;background:${BERRY_COLORS[t]};border:3px solid hsl(45,7%,15%);z-index:${i + 1};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:16px;opacity:${(m.depleted || m.pickedAt) ? 0.55 : 1}">${label}${isLast && badge ? `<span style="position:absolute;bottom:-4px;right:-4px;width:20px;height:20px;border-radius:50%;background:hsl(45,7%,15%);display:flex;align-items:center;justify-content:center">${badge}</span>` : ''}</div>`;
       }).join('');
       const icon = window.L.divIcon({
@@ -533,7 +551,7 @@ class Component extends DCLogic {
       draft: { name: m.name || '', berryTypes: m.berryTypes || [m.berryType], rating: m.rating, note: m.note, photo: m.photo, lastPicked: m.lastPicked || '' },
     });
   }
-  closeAddDialog() { this.setState({ addOpen: false }); }
+  closeAddDialog() { this.setState({ addOpen: false, berryDropdownOpen: false }); }
 
   setDraft(patch) { this.setState(s => ({ draft: { ...s.draft, ...patch } })); }
 
@@ -675,12 +693,18 @@ class Component extends DCLogic {
       addDialogTitle: s.editingId ? 'Rediger område' : 'Nytt bærområde',
       draft: s.draft,
       hasDraftPhoto: !!s.draft.photo,
-      draftHasBlabaer: s.draft.berryTypes.includes('blabaer'),
-      draftHasTyttebaer: s.draft.berryTypes.includes('tyttebaer'),
-      draftHasMulter: s.draft.berryTypes.includes('multer'),
-      toggleDraftBlabaer: () => this.setDraft({ berryTypes: this.toggleBerryType(s.draft.berryTypes, 'blabaer') }),
-      toggleDraftTyttebaer: () => this.setDraft({ berryTypes: this.toggleBerryType(s.draft.berryTypes, 'tyttebaer') }),
-      toggleDraftMulter: () => this.setDraft({ berryTypes: this.toggleBerryType(s.draft.berryTypes, 'multer') }),
+      draftPhotoRef: (node) => { if (node && s.draft.photo) node.src = s.draft.photo; },
+      berryDropdownOpen: s.berryDropdownOpen,
+      berryDropdownArrowTransform: s.berryDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+      toggleBerryDropdown: () => this.setState(st => ({ berryDropdownOpen: !st.berryDropdownOpen })),
+      closeBerryDropdown: () => this.setState({ berryDropdownOpen: false }),
+      draftBerryTypesLabel: s.draft.berryTypes.length ? s.draft.berryTypes.slice().sort((a, b) => BERRY_ORDER.indexOf(a) - BERRY_ORDER.indexOf(b)).map(t => BERRY_LABELS[t]).join(', ') : 'Velg bærsort',
+      berryTypeOptions: BERRY_ORDER.map(t => ({
+        label: BERRY_LABELS[t],
+        color: BERRY_COLORS[t],
+        checked: s.draft.berryTypes.includes(t),
+        onChange: () => this.setDraft({ berryTypes: this.toggleBerryType(s.draft.berryTypes, t) }),
+      })),
       starValues: [1, 2, 3, 4, 5].map(n => ({
         onClick: () => this.setDraft({ rating: n }),
         fill: n <= s.draft.rating ? '#d9a536' : 'none',
@@ -712,7 +736,7 @@ class Component extends DCLogic {
         stroke: detailMarker && n <= detailMarker.rating ? '#d9a536' : 'var(--color-neutral-500)',
       })),
       detailMarkerPickedLabel: detailMarker && detailMarker.pickedAt ? new Date(detailMarker.pickedAt).toLocaleDateString('nb-NO') : null,
-      detailMarkerPhoto: detailMarker ? detailMarker.photo : null,
+      detailPhotoRef: (node) => { if (node && detailMarker && detailMarker.photo) node.src = detailMarker.photo; },
       hasDetailPhoto: !!(detailMarker && detailMarker.photo),
       detailMarkerNote: detailMarker ? detailMarker.note : null,
       detailMarkerLastPickedLabel: detailMarker && detailMarker.lastPicked ? new Date(detailMarker.lastPicked).toLocaleDateString('nb-NO') : null,
