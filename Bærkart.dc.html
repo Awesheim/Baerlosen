@@ -83,6 +83,10 @@
             <input type="checkbox" checked="{{ filterMulterActive }}" onChange="{{ toggleFilterMulter }}" style="display:none">
             <span style="position:absolute;top:calc(50% - 16px);left:4px;width:32px;height:32px;border-radius:999px;background:{{ multerThumbColor }};display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--font-body);font-weight:600;font-size:14px;transition:transform 150ms ease-in-out;transform:{{ multerThumbTransform }}">M</span>
           </label>
+          <label style="position:relative;width:56px;height:40px;border-radius:999px;display:block;cursor:pointer;flex:none;background:{{ bringebaerTrackBg }};border:1px solid {{ bringebaerColor }}">
+            <input type="checkbox" checked="{{ filterBringebaerActive }}" onChange="{{ toggleFilterBringebaer }}" style="display:none">
+            <span style="position:absolute;top:calc(50% - 16px);left:4px;width:32px;height:32px;border-radius:999px;background:{{ bringebaerThumbColor }};display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--font-body);font-weight:600;font-size:14px;transition:transform 150ms ease-in-out;transform:{{ bringebaerThumbTransform }}">Br</span>
+          </label>
         </div>
         <button class="btn btn-icon" style="width:48px;height:48px;border-radius:999px;flex:none;margin-left:auto;background:hsl(45,7%,20%);color:#fff" onClick="{{ locate }}" aria-label="Min posisjon">
           <svg width="26" height="26" viewBox="0 -960 960 960" fill="currentColor"><path d="M444-48v-98q-121-14-202.5-96T146-444H48v-72h98q14-120 95.5-202T444-814v-98h72v98q121 14 202.5 96T814-516h98v72h-98q-14 120-95.5 202T516-146v98h-72Zm223-245q77-77 77-187t-77-187q-77-77-187-77t-187 77q-77 77-77 187t77 187q77 77 187 77t187-77Zm-289-85q-42-42-42-102t42-102q42-42 102-42t102 42q42 42 42 102t-42 102q-42 42-102 42t-102-42Zm158-46q23-23 23-56t-23-56q-23-23-56-23t-56 23q-23 23-23 56t23 56q23 23 56 23t56-23Zm-55-57Z"/></svg>
@@ -306,7 +310,7 @@ class Component extends DCLogic {
     if (!CURRENT_USER) { window.location.href = './Login.dc.html'; }
     this.state = {
       markers: [],
-      filterTypes: { blabaer: true, tyttebaer: true, multer: true },
+      filterTypes: { blabaer: true, tyttebaer: true, multer: true, bringebaer: true },
       showPicked: true,
       addOpen: false,
       editingId: null,
@@ -673,21 +677,27 @@ class Component extends DCLogic {
       filterBlabaerActive: s.filterTypes.blabaer,
       filterTyttebaerActive: s.filterTypes.tyttebaer,
       filterMulterActive: s.filterTypes.multer,
+      filterBringebaerActive: s.filterTypes.bringebaer,
       blabaerColor: BERRY_COLORS.blabaer,
       tyttebaerColor: BERRY_COLORS.tyttebaer,
       multerColor: BERRY_COLORS.multer,
+      bringebaerColor: BERRY_COLORS.bringebaer,
       blabaerThumbTransform: s.filterTypes.blabaer ? 'translateX(16px)' : 'translateX(0)',
       tyttebaerThumbTransform: s.filterTypes.tyttebaer ? 'translateX(16px)' : 'translateX(0)',
       multerThumbTransform: s.filterTypes.multer ? 'translateX(16px)' : 'translateX(0)',
+      bringebaerThumbTransform: s.filterTypes.bringebaer ? 'translateX(16px)' : 'translateX(0)',
       blabaerThumbColor: s.filterTypes.blabaer ? BERRY_COLORS.blabaer : BERRY_COLORS_SUBTLE.blabaer,
       tyttebaerThumbColor: s.filterTypes.tyttebaer ? BERRY_COLORS.tyttebaer : BERRY_COLORS_SUBTLE.tyttebaer,
       multerThumbColor: s.filterTypes.multer ? BERRY_COLORS.multer : BERRY_COLORS_SUBTLE.multer,
+      bringebaerThumbColor: s.filterTypes.bringebaer ? BERRY_COLORS.bringebaer : BERRY_COLORS_SUBTLE.bringebaer,
       blabaerTrackBg: TOGGLE_TRACK_COLOR,
       tyttebaerTrackBg: TOGGLE_TRACK_COLOR,
       multerTrackBg: TOGGLE_TRACK_COLOR,
+      bringebaerTrackBg: TOGGLE_TRACK_COLOR,
       toggleFilterBlabaer: () => this.setState(st => ({ filterTypes: { ...st.filterTypes, blabaer: !st.filterTypes.blabaer } })),
       toggleFilterTyttebaer: () => this.setState(st => ({ filterTypes: { ...st.filterTypes, tyttebaer: !st.filterTypes.tyttebaer } })),
       toggleFilterMulter: () => this.setState(st => ({ filterTypes: { ...st.filterTypes, multer: !st.filterTypes.multer } })),
+      toggleFilterBringebaer: () => this.setState(st => ({ filterTypes: { ...st.filterTypes, bringebaer: !st.filterTypes.bringebaer } })),
 
       addOpen: s.addOpen,
       addDialogTitle: s.editingId ? 'Rediger område' : 'Nytt bærområde',
