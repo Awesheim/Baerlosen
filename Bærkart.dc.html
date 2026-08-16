@@ -533,10 +533,16 @@ class Component extends DCLogic {
   }
 
   locate() {
-    // Dummy posisjon inntil ekte GPS er koblet til: Kobberdammen ved Trondheim
-    const latitude = 63.3915, longitude = 10.3475;
-    this.setState({ userPos: { lat: latitude, lng: longitude } }, () => this.renderUserMarker());
-    if (this.leaflet) this.leaflet.setView([latitude, longitude], 14);
+    if (!navigator.geolocation) { this.showToast('GPS er ikke tilgjengelig'); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        this.setState({ userPos: { lat: latitude, lng: longitude } }, () => this.renderUserMarker());
+        if (this.leaflet) this.leaflet.setView([latitude, longitude], 14);
+      },
+      () => { this.showToast('Fikk ikke tilgang til posisjon'); },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   }
 
   openAddDialog(latlng) {
