@@ -53,7 +53,7 @@
     <div style="position:relative;flex:1;overflow:hidden">
       <div ref="{{ mapRef }}" style="position:absolute;inset:0"></div>
 
-      <div style="position:absolute;top:16px;left:16px;right:16px;z-index:500;display:flex;align-items:center;gap:10px;background:hsl(45,7%,98%);border-radius:999px;padding:12px 18px;transform:{{ searchBarTransform }};transition:transform 280ms ease-in-out">
+      <div style="position:absolute;top:16px;left:16px;right:16px;max-width:480px;margin:0 auto;z-index:500;display:flex;align-items:center;gap:10px;background:hsl(45,7%,98%);border-radius:999px;padding:12px 18px;transform:{{ searchBarTransform }};transition:transform 280ms ease-in-out">
         <svg width="24" height="24" viewBox="0 -960 960 960" fill="hsl(45,7%,20%)" style="flex:none"><path d="M765-144 526-383q-30 22-65.79 34.5-35.79 12.5-76.18 12.5Q284-336 214-406t-70-170q0-100 70-170t170-70q100 0 170 70t70 170.03q0 40.39-12.5 76.18Q599-464 577-434l239 239-51 51ZM384-408q70 0 119-49t49-119q0-70-49-119t-119-49q-70 0-119 49t-49 119q0 70 49 119t119 49Z"/></svg>
         <input type="text" placeholder="Søk etter sted eller bærfelt" value="{{ searchQuery }}" onChange="{{ setSearchQuery }}" onKeyDown="{{ handleSearchKeyDown }}" style="flex:1;min-width:0;border:none;background:none;outline:none;font-family:var(--font-body);font-size:16px;color:var(--color-text)">
       </div>
@@ -70,7 +70,7 @@
         <button class="btn btn-icon" style="width:48px;height:48px;border-radius:999px;flex:none;background:hsl(45,7%,20%);color:#fff" onClick="{{ openLegend }}" aria-label="Forklaring">
           <svg width="26" height="26" viewBox="0 -960 960 960" fill="currentColor"><path d="M428-360q0-72 14.5-107.5T503-543q43-37 58-59.5t15-50.5q0-38-27-62.5T480-740q-37 0-65 23t-40 63l-96-40q21-66 76.5-106T480-840q89 0 145 51.5T681-656q0 42-18.5 76.5T596-500q-41 38-50.5 60.5T535-360H428Zm52 216q-30 0-51-21t-21-51q0-30 21-51t51-21q30 0 51 21t21 51q0 30-21 51t-51 21Z"/></svg>
         </button>
-        <div style="display:flex;gap:10px;flex:1;justify-content:center">
+        <div style="display:flex;gap:6px;flex:1;justify-content:center">
           <label style="position:relative;width:56px;height:40px;border-radius:999px;display:block;cursor:pointer;flex:none;background:{{ blabaerTrackBg }};border:1px solid {{ blabaerColor }}">
             <input type="checkbox" checked="{{ filterBlabaerActive }}" onChange="{{ toggleFilterBlabaer }}" style="display:none">
             <span style="position:absolute;top:calc(50% - 16px);left:4px;width:32px;height:32px;border-radius:999px;background:{{ blabaerThumbColor }};display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--font-body);font-weight:600;font-size:14px;transition:transform 150ms ease-in-out;transform:{{ blabaerThumbTransform }}">B</span>
@@ -283,7 +283,7 @@
 <script type="text/x-dc" data-dc-script>
 const KEY = 'baerkart_markers_v1';
 const BERRY_LABELS = { blabaer: 'Blåbær', tyttebaer: 'Tyttebær', multer: 'Multer', bringebaer: 'Bringebær' };
-const BERRY_COLORS = { blabaer: '#3b6ea8', tyttebaer: 'hsl(0,60%,55%)', multer: '#d9a536', bringebaer: 'hsl(350,65%,55%)' };
+const BERRY_COLORS = { blabaer: '#3b6ea8', tyttebaer: 'hsl(0,60%,55%)', multer: '#d9a536', bringebaer: '#D92A6A' };
 const BERRY_COLORS_SUBTLE = { blabaer: 'hsl(211,40%,67%)', tyttebaer: 'hsl(0,47%,67%)', multer: 'hsl(43,68%,75%)', bringebaer: 'hsl(350,50%,75%)' };
 const BERRY_ORDER = ['blabaer', 'tyttebaer', 'multer', 'bringebaer'];
 const TOGGLE_TRACK_COLOR = 'hsl(45,7%,98%)';
