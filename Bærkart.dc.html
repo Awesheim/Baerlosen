@@ -235,26 +235,30 @@
         <sc-if value="{{ hasVisitLog }}" hint-placeholder-val="{{ false }}">
         <div style="margin-top:8px">
           <div style="font-family:var(--font-body);font-weight:700;font-size:16px;color:var(--color-text);margin-bottom:12px">Besøkslogg</div>
+          <div style="display:table;width:100%;border-collapse:collapse;table-layout:fixed">
           <sc-for list="{{ visitLog }}" as="visit" hint-placeholder-count="0">
-            <div style="border-top:1px solid hsl(45,7%,60%);padding:10px 0;display:flex;justify-content:space-between;align-items:center;font-size:16px">
-              <span style="display:flex;align-items:center;gap:8px">
-                <sc-if value="{{ visit.mine }}" hint-placeholder-val="{{ false }}">
-                  <button class="btn btn-icon btn-ghost" style="width:28px;height:28px;min-width:28px;padding:0;border-radius:999px" onClick="{{ visit.onEdit }}" aria-label="Rediger besøk">
-                    <svg width="14" height="14" viewBox="0 -960 960 960" fill="currentColor"><path d="M216-216h51l375-375-51-51-375 375v51Zm-72 72v-153l498-498q11-11 23.84-16 12.83-5 27-5 14.16 0 27.16 5t24 16l51 51q11 11 16 24t5 26.54q0 14.45-5.02 27.54T795-642L297-144H144Zm600-549-51-51 51 51Zm-127.95 76.95L591-642l51 51-25.95-25.05Z"/></svg>
-                  </button>
-                </sc-if>
-                {{ visit.name }}
-              </span>
-              <div style="display:flex;align-items:center;gap:16px">
-                <div style="display:flex;gap:1px">
+            <div style="display:table-row;font-size:16px">
+              <div style="display:table-cell;width:33.33%;border-top:1px solid hsl(45,7%,60%);padding:10px 8px 10px 0;vertical-align:middle">
+                <span style="display:flex;align-items:center;gap:8px">
+                  <sc-if value="{{ visit.mine }}" hint-placeholder-val="{{ false }}">
+                    <button class="btn btn-icon btn-ghost" style="width:28px;height:28px;min-width:28px;padding:0;border-radius:999px" onClick="{{ visit.onEdit }}" aria-label="Rediger besøk">
+                      <svg width="14" height="14" viewBox="0 -960 960 960" fill="currentColor"><path d="M216-216h51l375-375-51-51-375 375v51Zm-72 72v-153l498-498q11-11 23.84-16 12.83-5 27-5 14.16 0 27.16 5t24 16l51 51q11 11 16 24t5 26.54q0 14.45-5.02 27.54T795-642L297-144H144Zm600-549-51-51 51 51Zm-127.95 76.95L591-642l51 51-25.95-25.05Z"/></svg>
+                    </button>
+                  </sc-if>
+                  {{ visit.name }}
+                </span>
+              </div>
+              <div style="display:table-cell;width:33.33%;border-top:1px solid hsl(45,7%,60%);padding:10px 16px 10px 0;vertical-align:middle;white-space:nowrap;text-align:center">
+                <div style="display:flex;gap:1px;justify-content:center">
                   <sc-for list="{{ visit.amountIcons }}" as="icon" hint-placeholder-count="5">
-                    <svg width="12" height="12" viewBox="0 -960 960 960" fill="{{ icon.color }}"><path d="{{ icon.path }}"></path></svg>
+                    <svg width="20" height="20" viewBox="0 -960 960 960" fill="{{ icon.color }}"><path d="{{ icon.path }}"></path></svg>
                   </sc-for>
                 </div>
-                <span style="color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ visit.date }}</span>
               </div>
+              <div style="display:table-cell;width:33.33%;border-top:1px solid hsl(45,7%,60%);padding:10px 0;vertical-align:middle;text-align:right;white-space:nowrap;color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ visit.date }}</div>
             </div>
           </sc-for>
+          </div>
         </div>
         </sc-if>
         </div>
