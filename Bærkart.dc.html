@@ -148,16 +148,28 @@
           <sc-if value="{{ hasDraftPhoto }}" hint-placeholder-val="{{ false }}">
             <img ref="{{ draftPhotoRef }}" style="width:100%;height:130px;object-fit:cover;border-radius:var(--radius-md);margin-top:6px">
           </sc-if>
-          <button class="btn btn-secondary btn-block" onClick="{{ triggerFileInput }}">
+          <button class="btn btn-secondary" onClick="{{ triggerFileInput }}">
             <svg width="16" height="16" viewBox="0 -960 960 960" fill="currentColor"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5t-48 119q0 69.5 48 118.5t120 49Zm0-72q-42 0-69-28.13T384-433q0-39.9 27-67.45Q438-528 480-528t69 27.55q27 27.55 27 67.45 0 40.74-27 68.87Q522-336 480-336ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l72-96h240l72 96h120q29.7 0 50.85 21.5Q864-677 864-648v432q0 29-21.15 50.5T792-144H168Zm0-72h624v-432H636l-72.1-96H396l-72 96H168v432Zm312-217Z"/></svg>
             {{ photoButtonLabel }}
           </button>
         </div>
 
-        <div class="dialog-actions">
+        <div class="dialog-actions" style="margin-top:48px">
+          <sc-if value="{{ isEditingField }}" hint-placeholder-val="{{ false }}">
+            <button class="btn btn-secondary" onClick="{{ askDeleteFromEdit }}" style="margin-right:auto">Slett bærfelt</button>
+          </sc-if>
           <button class="btn btn-secondary" onClick="{{ closeAddDialog }}">Avbryt</button>
           <button class="btn btn-primary" onClick="{{ saveDraft }}">Lagre</button>
         </div>
+        <sc-if value="{{ isEditingField }}" hint-placeholder-val="{{ false }}">
+          <sc-if value="{{ showConfirmDeleteField }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:8px;background:var(--color-accent-100);border:1px solid hsl(45,7%,80%);border-radius:var(--radius-md);padding:10px">
+              <span style="font-size:16px;flex:1">Slette dette området permanent?</span>
+              <button class="btn btn-secondary" style="font-size:16px;padding:5px 10px" onClick="{{ cancelDelete }}">Avbryt</button>
+              <button class="btn btn-primary" style="font-size:16px;padding:5px 10px" onClick="{{ confirmDelete }}">Slett</button>
+            </div>
+          </sc-if>
+        </sc-if>
       </div>
     </div>
   </sc-if>
@@ -166,10 +178,15 @@
     <div style="position:fixed;inset:0;z-index:1000;display:flex;align-items:flex-end;justify-content:center;pointer-events:none">
       <div class="dialog" ref="{{ sheetRef }}" style="width:100%;max-width:520px;margin:0;border-radius:var(--radius-lg) var(--radius-lg) 0 0;max-height:75vh;overflow:hidden;padding:0;background:hsl(45,7%,98%);pointer-events:auto;display:flex;flex-direction:column;transform:{{ detailSheetTransform }};transition:transform 280ms {{ detailSheetEasing }}">
         <div style="display:flex;flex-direction:column;gap:8px;flex:none;padding:16px 16px 0">
-        <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="display:flex;flex-direction:column;gap:0px">
         <div style="display:flex;align-items:flex-start;gap:8px">
-          <div style="flex:1;min-width:0">
+          <div style="flex:1;min-width:0;display:flex;align-items:center;gap:6px">
             <div class="dialog-title" style="margin:0">{{ detailMarkerName }}</div>
+            <sc-if value="{{ detailMarkerIsOwner }}" hint-placeholder-val="{{ false }}">
+              <button class="btn btn-icon btn-ghost" style="width:32px;height:32px;min-width:32px;padding:0;border-radius:999px" onClick="{{ openEditFromDetail }}" aria-label="Rediger">
+                <svg width="18" height="18" viewBox="0 -960 960 960" fill="currentColor"><path d="M216-216h51l375-375-51-51-375 375v51Zm-72 72v-153l498-498q11-11 23.84-16 12.83-5 27-5 14.16 0 27.16 5t24 16l51 51q11 11 16 24t5 26.54q0 14.45-5.02 27.54T795-642L297-144H144Zm600-549-51-51 51 51Zm-127.95 76.95L591-642l51 51-25.95-25.05Z"/></svg>
+              </button>
+            </sc-if>
           </div>
           <button class="btn btn-icon btn-ghost" style="width:36px;height:36px" onClick="{{ closeDetail }}" aria-label="Lukk">
             <svg width="24" height="24" viewBox="0 -960 960 960" fill="currentColor"><path d="m291-240-51-51 189-189-189-189 51-51 189 189 189-189 51 51-189 189 189 189-51 51-189-189-189 189Z"/></svg>
@@ -189,19 +206,13 @@
             </sc-for>
           </div>
           <span style="flex:1"></span>
+          <span style="font-size:16px;color:color-mix(in srgb, var(--color-text) 60%, transparent);white-space:nowrap">Lagt til av: {{ detailMarkerAddedBy }}</span>
         </div>
         </div>
 
-        <div class="dialog-actions" style="justify-content:flex-start;align-items:center;gap:8px;margin:0">
+        <div class="dialog-actions" style="justify-content:center;align-items:center;gap:8px;margin:24px 0 0">
           <button class="btn btn-primary" onClick="{{ openPickModal }}">
             <svg width="18" height="18" viewBox="0 -960 960 960" fill="currentColor" style="margin-right:2px;vertical-align:-3px"><path d="M440-440H240v-80h200v-200h80v200h200v80H520v200h-80v-200Z"/></svg>Jeg har plukka
-          </button>
-          <span style="flex:1"></span>
-          <button class="btn btn-icon btn-secondary" style="width:40px;height:40px;min-width:40px;padding:0;border-radius:999px" onClick="{{ openEditFromDetail }}" aria-label="Rediger">
-            <svg width="20" height="20" viewBox="0 -960 960 960" fill="currentColor"><path d="M216-216h51l375-375-51-51-375 375v51Zm-72 72v-153l498-498q11-11 23.84-16 12.83-5 27-5 14.16 0 27.16 5t24 16l51 51q11 11 16 24t5 26.54q0 14.45-5.02 27.54T795-642L297-144H144Zm600-549-51-51 51 51Zm-127.95 76.95L591-642l51 51-25.95-25.05Z"/></svg>
-          </button>
-          <button class="btn btn-icon btn-secondary" style="width:40px;height:40px;min-width:40px;padding:0;border-radius:999px" onClick="{{ askDelete }}" aria-label="Slett">
-            <svg width="20" height="20" viewBox="0 -960 960 960" fill="currentColor"><path d="M312-144q-29.7 0-50.85-21.15Q240-186.3 240-216v-480h-48v-72h192v-48h192v48h192v72h-48v479.57Q720-186 698.85-165T648-144H312Zm336-552H312v480h336v-480ZM384-288h72v-336h-72v336Zm120 0h72v-336h-72v336ZM312-696v480-480Z"/></svg>
           </button>
         </div>
         </div>
@@ -221,27 +232,23 @@
           <img ref="{{ detailPhotoRef }}" style="width:100%;height:150px;object-fit:cover;border-radius:var(--radius-md)">
         </sc-if>
 
-        <sc-if value="{{ detailMarkerLastPickedLabel }}" hint-placeholder-val="{{ false }}">
-          <div class="dialog-body" style="margin:0"><strong>Sist plukket:</strong> {{ detailMarkerLastPickedLabel }}</div>
-        </sc-if>
         <sc-if value="{{ detailMarkerNote }}" hint-placeholder-val="{{ false }}">
-          <p class="dialog-body" style="margin:0">{{ detailMarkerNote }}</p>
+          <div>
+            <div style="font-family:var(--font-body);font-weight:700;font-size:16px;line-height:115%;color:var(--color-text);margin-bottom:6px">Beskrivelse</div>
+            <p class="dialog-body" style="margin:0;margin-top:0">{{ detailMarkerNote }}</p>
+          </div>
         </sc-if>
-
-        <div style="margin-top:8px">
-          <p class="dialog-body" style="margin:0;color:color-mix(in srgb, var(--color-text) 60%, transparent)">Feltet er lagt til av: {{ detailMarkerAddedBy }}</p>
-        </div>
 
         <sc-if value="{{ hasVisitLog }}" hint-placeholder-val="{{ false }}">
         <div style="margin-top:8px">
-          <div style="font-family:var(--font-body);font-weight:700;font-size:16px;color:var(--color-text);margin-bottom:12px">Besøkslogg</div>
+          <div style="font-family:var(--font-body);font-weight:700;font-size:16px;color:var(--color-text);margin-bottom:12px">Plukklogg</div>
           <div style="display:table;width:100%;border-collapse:collapse;table-layout:fixed">
           <sc-for list="{{ visitLog }}" as="visit" hint-placeholder-count="0">
             <div style="display:table-row;font-size:16px">
               <div style="display:table-cell;width:33.33%;border-top:1px solid hsl(45,7%,60%);padding:10px 8px 10px 0;vertical-align:middle">
                 <span style="display:flex;align-items:center;gap:8px">
                   <sc-if value="{{ visit.mine }}" hint-placeholder-val="{{ false }}">
-                    <button class="btn btn-icon btn-ghost" style="width:28px;height:28px;min-width:28px;padding:0;border-radius:999px" onClick="{{ visit.onEdit }}" aria-label="Rediger besøk">
+                    <button class="btn btn-icon btn-ghost" style="width:28px;height:28px;min-width:28px;padding:0;border-radius:999px" onClick="{{ visit.onEdit }}" aria-label="Rediger plukking">
                       <svg width="14" height="14" viewBox="0 -960 960 960" fill="currentColor"><path d="M216-216h51l375-375-51-51-375 375v51Zm-72 72v-153l498-498q11-11 23.84-16 12.83-5 27-5 14.16 0 27.16 5t24 16l51 51q11 11 16 24t5 26.54q0 14.45-5.02 27.54T795-642L297-144H144Zm600-549-51-51 51 51Zm-127.95 76.95L591-642l51 51-25.95-25.05Z"/></svg>
                     </button>
                   </sc-if>
@@ -298,7 +305,7 @@
         <div class="dialog-title">{{ pickModalTitle }}</div>
         <div class="field" style="max-width:160px;width:100%;min-width:0;box-sizing:border-box">
           <label>Dato</label>
-          <input class="input" type="date" value="{{ pickDraft.date }}" onChange="{{ setPickDate }}" style="width:100%;min-width:0;box-sizing:border-box">
+          <input class="input" type="date" ref="{{ pickDateRef }}" onChange="{{ setPickDate }}" style="width:100%;min-width:0;box-sizing:border-box">
         </div>
         <div class="field">
           <label>Mengde bær</label>
@@ -310,7 +317,10 @@
             </sc-for>
           </div>
         </div>
-        <div class="dialog-actions">
+        <div class="dialog-actions" style="margin-top:48px">
+          <sc-if value="{{ isEditingVisit }}" hint-placeholder-val="{{ false }}">
+            <button class="btn btn-secondary" onClick="{{ deleteVisit }}" style="margin-right:auto">Slett registrering</button>
+          </sc-if>
           <button class="btn btn-secondary" onClick="{{ closePickModal }}">Avbryt</button>
           <button class="btn btn-primary" onClick="{{ savePick }}">Lagre</button>
         </div>
@@ -675,9 +685,21 @@ class Component extends DCLogic {
   async confirmDelete() {
     const id = this.state.confirmDeleteId;
     await sb.from('berry_fields').delete().eq('id', id);
-    this.setState(s => ({ markers: s.markers.filter(m => m.id !== id), detailId: null, confirmDeleteId: null }));
+    this.setState(s => ({ markers: s.markers.filter(m => m.id !== id), detailId: null, confirmDeleteId: null, addOpen: false }));
     this.showToast('Slettet');
   }
+  askDeleteFromEdit() { this.setState({ confirmDeleteId: this.state.editingId }); }
+  async deleteVisit() {
+    const editingId = this.state.editingVisitId;
+    if (!editingId) return;
+    const { error } = await sb.from('visits').delete().eq('id', editingId);
+    if (error) { this.showToast('Kunne ikke slette: ' + error.message); return; }
+    const fieldId = this.state.detailId;
+    this.setState({ pickModalOpen: false, editingVisitId: null });
+    this.fetchData();
+    if (fieldId) this.loadVisitLog(fieldId);
+  }
+
   toggleBerryType(current, type) {
     if (current.includes(type)) {
       const next = current.filter(t => t !== type);
@@ -759,6 +781,9 @@ class Component extends DCLogic {
       toggleFilterBringebaer: () => this.setState(st => ({ filterTypes: { ...st.filterTypes, bringebaer: !st.filterTypes.bringebaer } })),
 
       addOpen: s.addOpen,
+      isEditingField: !!s.editingId,
+      showConfirmDeleteField: !!(s.editingId && s.confirmDeleteId === s.editingId),
+      askDeleteFromEdit: () => this.askDeleteFromEdit(),
       addDialogTitle: s.editingId ? 'Rediger område' : 'Nytt bærområde',
       draft: s.draft,
       hasDraftPhoto: !!s.draft.photo,
@@ -795,7 +820,8 @@ class Component extends DCLogic {
 
       detailOpen: !!detailMarker,
       detailMarkerName: detailMarker ? (detailMarker.name || 'Bærfelt') : '',
-      detailMarkerAddedBy: detailMarker ? (detailMarker.addedBy || CURRENT_USER) : '',
+      detailMarkerAddedBy: detailMarker ? (detailMarker.addedBy || 'ukjent') : '',
+      detailMarkerIsOwner: !!(detailMarker && detailMarker.addedBy === CURRENT_USER),
       detailMarkerBerryLabel: detailMarker ? (detailMarker.berryTypes || [detailMarker.berryType]).map(t => BERRY_LABELS[t]).join(', ') : '',
       detailMarkerColor: detailMarker ? BERRY_COLORS[(detailMarker.berryTypes || [detailMarker.berryType])[0]] : 'transparent',
       detailBerryDots: detailMarker ? (detailMarker.berryTypes || [detailMarker.berryType]).slice().sort().map((t, i) => ({ color: BERRY_COLORS[t], marginLeft: i === 0 ? '0' : '-4px' })) : [],
@@ -817,10 +843,13 @@ class Component extends DCLogic {
       openEditFromDetail: () => this.openEditFromDetail(),
       openPickModal: () => this.openPickModal(),
       closePickModal: () => this.closePickModal(),
+      isEditingVisit: !!s.editingVisitId,
+      deleteVisit: () => this.deleteVisit(),
       savePick: () => this.savePick(),
       pickModalOpen: s.pickModalOpen,
-      pickModalTitle: s.editingVisitId ? 'Rediger besøk' : 'Registrer plukking',
+      pickModalTitle: s.editingVisitId ? 'Rediger plukking' : 'Registrer plukking',
       pickDraft: s.pickDraft,
+      pickDateRef: (node) => { if (node && node.value !== s.pickDraft.date) node.value = s.pickDraft.date; },
       setPickDate: (e) => this.setPick({ date: e.target.value }),
       pickStarValues: [1, 2, 3, 4, 5].map(n => ({
         onClick: () => this.setPick({ amount: n }),
